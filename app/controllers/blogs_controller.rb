@@ -10,7 +10,11 @@ class BlogsController < ApplicationController
     @blogs = Blog.search(params[:term]).published.default_order
   end
 
-  def show; end
+  def show
+    return if @blog.owned_by?(current_user)
+
+    raise ActiveRecord::RecordNotFound if @blog.secret?
+  end
 
   def new
     @blog = Blog.new
@@ -49,7 +53,11 @@ class BlogsController < ApplicationController
   end
 
   def blog_params
-    params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    if current_user.premium?
+      params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    else
+      params.require(:blog).permit(:title, :content, :secret)
+    end
   end
 
   def not_allow_others_to_update
