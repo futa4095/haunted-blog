@@ -4,7 +4,6 @@ class BlogsController < ApplicationController
   skip_before_action :authenticate_user!, only: %i[index show]
 
   before_action :set_blog, only: %i[show edit update destroy]
-  before_action :not_allow_others_to_update_or_delete, only: %i[edit update destroy]
 
   def index
     @blogs = Blog.search(params[:term]).published.default_order
@@ -45,7 +44,11 @@ class BlogsController < ApplicationController
   private
 
   def set_blog
-    @blog = Blog.published.or(Blog.where(user: current_user)).find(params[:id])
+    @blog = if action_name == 'show'
+              Blog.published.or(Blog.where(user: current_user)).find(params[:id])
+            else
+              Blog.where(user: current_user).find(params[:id])
+            end
   end
 
   def blog_params
@@ -54,11 +57,5 @@ class BlogsController < ApplicationController
     else
       params.require(:blog).permit(:title, :content, :secret)
     end
-  end
-
-  def not_allow_others_to_update_or_delete
-    return if @blog.owned_by?(current_user)
-
-    raise ActiveRecord::RecordNotFound
   end
 end
