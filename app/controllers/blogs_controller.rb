@@ -44,10 +44,18 @@ class BlogsController < ApplicationController
   private
 
   def set_blog
-    @blog = Blog.find(params[:id])
+    @blog = if action_name == 'show'
+              Blog.published.or(Blog.where(user: current_user)).find(params[:id])
+            else
+              current_user.blogs.find(params[:id])
+            end
   end
 
   def blog_params
-    params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    if current_user.premium?
+      params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    else
+      params.require(:blog).permit(:title, :content, :secret)
+    end
   end
 end
