@@ -47,7 +47,7 @@ class BlogsController < ApplicationController
     @blog = if action_name == 'show'
               Blog.published.or(Blog.where(user: current_user)).find(params[:id])
             else
-              Blog.where(user: current_user).find(params[:id])
+              current_user.blogs.find(params[:id])
             end
   end
 
